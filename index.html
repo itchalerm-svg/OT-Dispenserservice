@@ -5,10 +5,12 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxSXJ7kdEXE4uKWnjFK
 async function loadDashboardData() {
   try {
     // ยิงไปดึงข้อมูลจากลิงก์ Web App ของพี่
-    const response = await fetch(WEB_APP_URL);
+   // แก้จากเดิม ให้ส่งคำขอแบบ POST และระบุ redirect ข้ามท่อความปลอดภัยของ Google
+    const response = await fetch(WEB_APP_URL, {
+      method: "POST",
+      redirect: "follow"
+    });
     const data = await response.json();
-    
-    console.log("ข้อมูลที่ดึงมาได้:", data);
     
     // ตรงนี้ให้เพื่อนเอาตัวแปร data.records ไปใช้วาดกราฟหรือทำตารางฟิลเตอร์บนหน้าเว็บได้เลยครับ
     if (data && data.records) {
