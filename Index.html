@@ -1,1 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CHALERMCHAICHAN - OT Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background-color: #f3f2f7; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #f3f2f7; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .gradient-brand { background: linear-gradient(135deg, #e11d48 0%, #a855f7 50%, #4f46e5 100%); }
+    @media (max-width: 767px) { .content-body { padding-bottom: 80px; } }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col md:flex-row">
 
+  <script>
+    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw3CNUJYzuTaCdy-LfTwY1D2qjauDU7TBABuIkysdyG5iGqDKs5q5feKJS9AdC_yusjLQ/exec";
+  </script>
+
+  <aside class="w-64 bg-white min-h-screen border-r border-slate-200 hidden md:flex flex-col sticky top-0 h-screen z-50">
+    <div class="p-5 border-b border-slate-100 flex items-center gap-3 gradient-brand text-white">
+      <div class="font-bold text-sm tracking-tight">CHALERMCHAICHAN</div>
+    </div>
+    <nav class="flex-1 p-4 space-y-1">
+      <button onclick="switchView('dashboard')" id="menu-dashboard" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all gradient-brand text-white shadow-sm">📊 Dashboard</button>
+      <button onclick="switchView('companies')" id="menu-companies" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium rounded-xl transition-all text-slate-500 hover:bg-slate-50">🏢 สังกัดทั้งหมด</button>
+      <button onclick="switchView('employees')" id="menu-employees" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-medium rounded-xl transition-all text-slate-500 hover:bg-slate-50">👥 รายชื่อกำลังพล</button>
+    </nav>
+  </aside>
+
+  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-50 flex justify-around items-center py-2">
+    <button onclick="switchView('dashboard')" id="mb-menu-dashboard" class="flex flex-col items-center text-rose-600 font-bold"><span class="text-xl">📊</span><span class="text-[10px]">แดชบอร์ด</span></button>
+    <button onclick="switchView('companies')" id="mb-menu-companies" class="flex flex-col items-center text-slate-400 font-medium"><span class="text-xl">🏢</span><span class="text-[10px]">สังกัด</span></button>
+    <button onclick="switchView('employees')" id="mb-menu-employees" class="flex flex-col items-center text-slate-400 font-medium"><span class="text-xl">👥</span><span class="text-[10px]">กำลังพล</span></button>
+  </div>
+
+  <div class="flex-1 flex flex-col min-w-0 content-body">
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-40">
+      <div>
+        <span class="text-[9px] text-rose-600 font-bold uppercase" id="period-title">สรุปยอดรวมทั้งหมด</span>
+        <h1 class="text-base font-bold text-slate-900" id="main-view-title">OT EXECUTIVE INTELLIGENCE</h1>
+      </div>
+      <button onclick="fetchDataFromServer()" class="bg-slate-900 text-white px-3 py-1.5 rounded-xl text-xs flex items-center gap-1">🔄 ดึงข้อมูลสด</button>
+    </header>
+
+    <main class="p-4 space-y-4 max-w-7xl w-full mx-auto">
+      
+      <div id="view-dashboard" class="space-y-4">
+        <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-md">
+          <h3 class="text-xs font-bold text-rose-400 mb-2">📢 รายการขอทำ OT วันนี้ (ตัดรอบ 07:00 น.)</h3>
+          <div id="today-live-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div class="text-center py-2 text-xs text-slate-400 col-span-full">กำลังโหลดข้อมูลวันนี้...</div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-center">
+          <div>
+            <label class="block text-[10px] text-slate-400 font-bold mb-1">ตัวเลือกด่วน</label>
+            <div class="bg-slate-100 p-1 rounded-xl flex gap-1">
+              <button onclick="changeQuickPeriod('daily')" id="btn-daily" class="flex-1 py-1 text-center text-[11px] font-bold rounded-lg text-slate-500">รายวัน</button>
+              <button onclick="changeQuickPeriod('weekly')" id="btn-weekly" class="flex-1 py-1 text-center text-[11px] font-bold rounded-lg text-slate-500">สัปดาห์</button>
+              <button onclick="changeQuickPeriod('all')" id="btn-all" class="flex-1 py-1 text-center text-[11px] font-bold rounded-lg bg-white text-slate-900 shadow-sm">ทั้งหมด</button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 font-bold mb-1">เจาะจงรายเดือน</label>
+            <select id="month-filter" onchange="changeMonthPeriod()" class="w-full bg-slate-50 text-xs border border-slate-200 rounded-xl px-3 py-1.5 focus:outline-none"></select>
+          </div>
+          <div class="sm:col-span-2 grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] text-slate-400 font-bold mb-1">วันเริ่มต้น</label>
+              <input type="date" id="start-date" onchange="changeCustomDate()" class="w-full bg-slate-50 text-xs border border-slate-200 rounded-xl px-2 py-1">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 font-bold mb-1">วันสิ้นสุด</label>
+              <input type="date" id="end-date" onchange="changeCustomDate()" class="w-full bg-slate-50 text-xs border border-slate-200 rounded-xl px-2 py-1">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+            <div>
+              <p class="text-xs text-slate-400">ปริมาณชั่วโมงรวมตามตัวกรองเวลา</p>
+              <h2 class="text-2xl font-black text-slate-900" id="total-hours-display">0.0 <span class="text-xs font-normal text-slate-400">ชั่วโมง</span></h2>
+            </div>
+            <div class="h-44"><canvas id="trendChart"></canvas></div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col">
+            <h3 class="text-xs font-bold text-slate-400 mb-2">🏢 ชั่วโมงสะสมแยกสังกัด</h3>
+            <div class="h-36 relative flex justify-center items-center mx-auto w-full max-w-[160px]"><canvas id="donutChart"></canvas></div>
+            <div id="donut-legend" class="grid grid-cols-2 gap-2 mt-4 text-[10px] text-slate-500 font-medium"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-gradient-to-br from-rose-500 to-pink-600 text-white p-3 rounded-xl shadow-sm">
+            <p class="text-[9px] uppercase opacity-80">กลุ่มสังกัด No.1</p>
+            <h4 class="text-sm font-bold truncate" id="top-comp-1">-</h4>
+            <span class="text-[10px] block" id="top-hours-1">0.0 ชม.</span>
+          </div>
+          <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-3 rounded-xl shadow-sm">
+            <p class="text-[9px] uppercase opacity-80">กลุ่มสังกัด No.2</p>
+            <h4 class="text-sm font-bold truncate" id="top-comp-2">-</h4>
+            <span class="text-[10px] block" id="top-hours-2">0.0 ชม.</span>
+          </div>
+          <div class="bg-gradient-to-br from-sky-400 to-blue-600 text-white p-3 rounded-xl shadow-sm">
+            <p class="text-[9px] uppercase opacity-80">กลุ่มสังกัด No.3</p>
+            <h4 class="text-sm font-bold truncate" id="top-comp-3">-</h4>
+            <span class="text-[10px] block" id="top-hours-3">0.0 ชม.</span>
+          </div>
+          <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white p-3 rounded-xl shadow-sm">
+            <p class="text-[9px] uppercase opacity-80">กลุ่มสังกัด No.4</p>
+            <h4 class="text-sm font-bold truncate" id="top-comp-4">-</h4>
+            <span class="text-[10px] block" id="top-hours-4">0.0 ชม.</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+            <h3 class="text-xs font-bold text-slate-400 mb-2">🏆 อันดับคนทำ OT สูงสุด</h3>
+            <div class="space-y-3" id="employee-leaderboard"></div>
+          </div>
+          <div class="lg:col-span-2 bg-white border border-slate-200 overflow-hidden shadow-sm flex flex-col rounded-2xl">
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <h3 class="text-xs font-bold text-slate-700 uppercase">📋 ประวัติบันทึกการขอทำงานล่วงเวลา</h3>
+              <input type="text" id="search-box" onkeyup="filterTable()" placeholder="🔍 ค้นชื่อพนักงาน..." class="bg-white text-slate-800 border border-slate-300 rounded-xl px-3 py-1 text-xs w-full sm:w-44 focus:outline-none">
+            </div>
+            <div class="overflow-x-auto max-h-72">
+              <table class="w-full text-left text-xs min-w-[500px]" id="raw-table">
+                <thead>
+                  <tr class="bg-slate-900 text-white font-semibold sticky top-0">
+                    <th class="px-3 py-2.5">วันเวลา</th>
+                    <th class="px-3 py-2.5">ชื่อพนักงาน</th>
+                    <th class="px-3 py-2.5">บริษัท/สังกัด</th>
+                    <th class="px-3 py-2.5 text-center">ชั่วโมง</th>
+                    <th class="px-3 py-2.5">งาน</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-600" id="table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-companies" class="hidden space-y-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <h3 class="text-xs font-bold text-slate-800 mb-3">🏢 สรุปชั่วโมงทำงานสะสม แยกตามสังกัด</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs min-w-[400px]">
+              <thead>
+                <tr class="bg-slate-900 text-white font-semibold">
+                  <th class="px-4 py-2.5 rounded-l-xl">อันดับ</th>
+                  <th class="px-4 py-2.5">ชื่อสังกัด</th>
+                  <th class="px-4 py-2.5 text-center">ครั้งที่ขอ</th>
+                  <th class="px-4 py-2.5 text-right rounded-r-xl">ชั่วโมงสะสม</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-600" id="companies-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-employees" class="hidden space-y-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+            <h3 class="text-xs font-bold text-slate-800">👥 รายชื่อกำลังพลปฏิบัติงาน</h3>
+            <input type="text" id="search-emp-view" onkeyup="filterEmployeeViewTable()" placeholder="🔍 ค้นชื่อกำลังพล..." class="bg-slate-50 border border-slate-300 text-xs rounded-xl px-3 py-1.5 w-full sm:w-52 focus:outline-none focus:bg-white">
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs min-w-[450px]">
+              <thead>
+                <tr class="bg-slate-900 text-white font-semibold">
+                  <th class="px-4 py-2.5 rounded-l-xl">ชื่อ-นามสกุล</th>
+                  <th class="px-4 py-2.5">สังกัด</th>
+                  <th class="px-4 py-2.5 text-center">ทำโอที (ครั้ง)</th>
+                  <th class="px-4 py-2.5 text-right rounded-r-xl">จำนวนชั่วโมงรวม</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-600" id="employees-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    let rawRecords = [];
+    let filteredRecords = [];
+    let chartInstance = null;
+    let donutInstance = null;
+    const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    document.addEventListener("DOMContentLoaded", function() {
+      fetchDataFromServer();
+    });
+
+    function switchView(viewName) {
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-companies').classList.add('hidden');
+      document.getElementById('view-employees').classList.add('hidden');
+      document.getElementById('view-' + viewName).classList.remove('hidden');
+      
+      ['dashboard', 'companies', 'employees'].forEach(v => {
+        const btn = document.getElementById('menu-' + v);
+        if(btn) btn.className = "w-full flex items-center gap-3 px-4 py-3 text-xs font-medium rounded-xl transition-all text-slate-500 hover:bg-slate-50";
+        const mbBtn = document.getElementById('mb-menu-' + v);
+        if(mbBtn) mbBtn.className = "flex flex-col items-center text-slate-400 font-medium";
+      });
+      
+      if(document.getElementById('menu-' + viewName)) document.getElementById('menu-' + viewName).className = "w-full flex items-center gap-3 px-4 py-3 text-xs font-bold rounded-xl transition-all gradient-brand text-white shadow-sm";
+      if(document.getElementById('mb-menu-' + viewName)) document.getElementById('mb-menu-' + viewName).className = "flex flex-col items-center text-rose-600 font-bold";
+    }
+
+    // แก้ไขให้ดึงข้อมูลผ่าน Fetch API แทน google.script.run
+    function fetchDataFromServer() {
+      if(!GOOGLE_WEB_APP_URL || GOOGLE_WEB_APP_URL.includes("ใส่_URL_WEB_APP")) {
+        alert("กรุณาใส่ลิงก์ URL Web App ของ Google Apps Script ก่อนนะครับพี่!");
+        return;
+      }
+      
+      fetch(GOOGLE_WEB_APP_URL)
+        .then(response => response.json())
+        .then(data => {
+          rawRecords = data.records || [];
+          buildMonthDropdown();
+          renderTodayLiveRequests();
+          changeQuickPeriod('all');
+          buildSecondaryTables();
+        })
+        .catch(err => {
+          console.error("Error fetching data:", err);
+          alert("ไม่สามารถดึงข้อมูลจาก Google Sheets ได้ กรุณาตรวจสอบการตั้งค่าหลังบ้านครับ");
+        });
+    }
+
+    function renderTodayLiveRequests() {
+      const container = document.getElementById('today-live-container');
+      container.innerHTML = '';
+      const now = new Date();
+      let todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0, 0);
+      if (now.getHours() < 7) todayStart.setDate(todayStart.getDate() - 1);
+      let todayEnd = new Date(todayStart.getTime() + (24 * 60 * 60 * 1000));
+      let todayRecords = rawRecords.filter(r => r.timestamp >= todayStart.getTime() && r.timestamp < todayEnd.getTime());
+
+      if (todayRecords.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-3 text-xs text-slate-400 bg-slate-900/10 rounded-xl">วันนี้ยังไม่มีข้อมูลการขอทำ OT ใหม่เข้ามา</div>`;
+        return;
+      }
+      todayRecords.slice(0, 6).forEach(r => {
+        container.insertAdjacentHTML('beforeend', `
+          <div class="bg-slate-950/20 p-2.5 rounded-xl border border-slate-700/20 flex justify-between items-center">
+            <div class="min-w-0 pr-2">
+              <p class="text-xs font-bold text-slate-100 truncate">${r.name}</p>
+              <p class="text-[10px] text-slate-300 truncate">🏢 ${r.company}</p>
+            </div>
+            <span class="bg-rose-500/20 text-rose-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md">+${r.hours.toFixed(1)} ชม.</span>
+          </div>
+        `);
+      });
+    }
+
+    function buildSecondaryTables() {
+      let compMap = {}; let empMap = {};
+      rawRecords.forEach(r => {
+        if(!compMap[r.company]) compMap[r.company] = { hours: 0, count: 0 };
+        compMap[r.company].hours += r.hours; compMap[r.company].count += 1;
+        if(!empMap[r.name]) empMap[r.name] = { company: r.company, hours: 0, count: 0 };
+        empMap[r.name].hours += r.hours; empMap[r.name].count += 1;
+      });
+      const compBody = document.getElementById('companies-table-body'); compBody.innerHTML = '';
+      let sortedComps = Object.keys(compMap).map(k => ({ name: k, ...compMap[k] })).sort((a,b) => b.hours - a.hours);
+      sortedComps.forEach((c, idx) => {
+        compBody.insertAdjacentHTML('beforeend', `<tr><td class="px-4 py-2.5 font-bold text-slate-400">${idx+1}</td><td class="px-4 py-2.5 font-semibold text-slate-900">${c.name}</td><td class="px-4 py-2.5 text-center">${c.count} ครั้ง</td><td class="px-4 py-2.5 text-right font-bold text-rose-600">${c.hours.toFixed(1)} ชม.</td></tr>`);
+      });
+      renderEmployeeViewTable(Object.keys(empMap).map(k => ({ name: k, ...empMap[k] })).sort((a,b) => b.hours - a.hours));
+    }
+
+    function renderEmployeeViewTable(empList) {
+      const empBody = document.getElementById('employees-table-body'); empBody.innerHTML = '';
+      empList.forEach(e => {
+        empBody.insertAdjacentHTML('beforeend', `<tr class="data-emp-row"><td class="px-4 py-2.5 font-semibold text-slate-800 target-name">${e.name}</td><td class="px-4 py-2.5 text-slate-500">${e.company}</td><td class="px-4 py-2.5 text-center text-slate-400">${e.count} ครั้ง</td><td class="px-4 py-2.5 text-right font-bold text-slate-700">${e.hours.toFixed(1)} ชม.</td></tr>`);
+      });
+    }
+
+    function filterEmployeeViewTable() {
+      const val = document.getElementById('search-emp-view').value.toLowerCase();
+      document.querySelectorAll('.data-emp-row').forEach(row => {
+        if(row.querySelector('.target-name').innerText.toLowerCase().includes(val)) row.classList.remove('hidden');
+        else row.classList.add('hidden');
+      });
+    }
+
+    function buildMonthDropdown() {
+      const select = document.getElementById('month-filter'); select.innerHTML = '<option value="">-- เลือกเดือน --</option>';
+      let monthsSet = new Set();
+      rawRecords.forEach(r => {
+        const d = new Date(r.timestamp);
+        monthsSet.add(JSON.stringify({key: d.getFullYear()+"-"+d.getMonth(), label: thaiMonths[d.getMonth()]+" "+(d.getFullYear()+543), year: d.getFullYear(), month: d.getMonth()}));
+      });
+      Array.from(monthsSet).map(s => JSON.parse(s)).sort((a,b) => (b.year * 12 + b.month) - (a.year * 12 + a.month)).forEach(m => {
+        select.insertAdjacentHTML('beforeend', `<option value="${m.key}">${m.label}</option>`);
+      });
+    }
+
+    function changeQuickPeriod(period) {
+      document.getElementById('month-filter').value = ""; document.getElementById('start-date').value = ""; document.getElementById('end-date').value = "";
+      ['daily', 'weekly', 'all'].forEach(p => {
+        if(document.getElementById('btn-' + p)) document.getElementById('btn-' + p).className = p === period ? "flex-1 py-1 text-center text-[11px] font-bold rounded-lg bg-white text-slate-900 shadow-sm" : "flex-1 py-1 text-center text-[11px] font-bold rounded-lg text-slate-400";
+      });
+      const now = new Date().getTime(); const oneDay = 24 * 60 * 60 * 1000;
+      if (period === 'daily') { filteredRecords = rawRecords.filter(r => (now - r.timestamp) <= oneDay); }
+      else if (period === 'weekly') { filteredRecords = rawRecords.filter(r => (now - r.timestamp) <= (7 * oneDay)); }
+      else { filteredRecords = [...rawRecords]; }
+      processAndRender();
+    }
+
+    function changeMonthPeriod() {
+      const val = document.getElementById('month-filter').value; if(!val) return;
+      document.getElementById('start-date').value = ""; document.getElementById('end-date').value = "";
+      ['daily', 'weekly', 'all'].forEach(p => { if(document.getElementById('btn-' + p)) document.getElementById('btn-' + p).className = "flex-1 py-1 text-slate-400"; });
+      const parts = val.split('-'); const targetYear = parseInt(parts[0]); const targetMonth = parseInt(parts[1]);
+      filteredRecords = rawRecords.filter(r => { const d = new Date(r.timestamp); return d.getFullYear() === targetYear && d.getMonth() === targetMonth; });
+      processAndRender();
+    }
+
+    function changeCustomDate() {
+      const startVal = document.getElementById('start-date').value; const endVal = document.getElementById('end-date').value; if(!startVal || !endVal) return;
+      document.getElementById('month-filter').value = "";
+      const startDate = new Date(startVal + "T00:00:00").getTime(); const endDate = new Date(endVal + "T23:59:59").getTime();
+      filteredRecords = rawRecords.filter(r => r.timestamp >= startDate && r.timestamp <= endDate);
+      processAndRender();
+    }
+
+    function processAndRender() {
+      let totalHours = 0; let empMap = {}; let compMap = {}; let trendMap = {};
+      filteredRecords.forEach(r => {
+        totalHours += r.hours; empMap[r.name] = (empMap[r.name] || 0) + r.hours;
+        compMap[r.company] = (compMap[r.company] || 0) + r.hours; trendMap[r.dateLabel] = (trendMap[r.dateLabel] || 0) + r.hours;
+      });
+      document.getElementById('total-hours-display').innerHTML = totalHours.toFixed(1) + ` <span class="text-xs font-normal text-slate-400">ชั่วโมง</span>`;
+      let compArray = Object.keys(compMap).map(k => ({ company: k, hours: compMap[k] })).sort((a,b) => b.hours - a.hours);
+      for (let i = 1; i <= 4; i++) {
+        if (compArray[i-1]) { document.getElementById(`top-comp-${i}`).innerText = compArray[i-1].company; document.getElementById(`top-hours-${i}`).innerText = compArray[i-1].hours.toFixed(1) + " ชม."; }
+        else { document.getElementById(`top-comp-${i}`).innerText = "-"; document.getElementById(`top-hours-${i}`).innerText = "0.0 ชม."; }
+      }
+      let empArray = Object.keys(empMap).map(k => ({ name: k, hours: empMap[k] })).sort((a,b) => b.hours - a.hours);
+      const empContainer = document.getElementById('employee-leaderboard'); empContainer.innerHTML = '';
+      if(empArray.length > 0) {
+        empArray.slice(0, 5).forEach((e, i) => {
+          let c = i===0?"bg-rose-500":i===1?"bg-purple-500":i===2?"bg-sky-500":"bg-slate-400";
+          empContainer.insertAdjacentHTML('beforeend', `<div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full ${c} text-white flex items-center justify-center font-bold text-[11px]">${i+1}</div><div class="flex-1 min-w-0"><p class="text-xs font-bold text-slate-800 truncate">${e.name}</p></div><span class="text-[11px] font-extrabold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded-md">${e.hours.toFixed(1)} ชม.</span></div>`);
+        });
+      } else { empContainer.innerHTML = '<p class="text-xs text-slate-400 text-center">ไม่มีข้อมูล</p>'; }
+
+      let trendLabels = Object.keys(trendMap).slice(-7); let trendValues = trendLabels.map(l => trendMap[l].toFixed(1));
+      if(trendLabels.length === 0) { trendLabels = ['ไม่มีข้อมูล']; trendValues = [0]; }
+      const ctx = document.getElementById('trendChart').getContext('2d'); if(chartInstance) chartInstance.destroy();
+      let gf = ctx.createLinearGradient(0, 0, 0, 180); gf.addColorStop(0, 'rgba(225, 29, 72, 0.25)'); gf.addColorStop(1, 'rgba(225, 29, 72, 0.0)');
+      chartInstance = new Chart(ctx, { type: 'line', data: { labels: trendLabels, datasets: [{ data: trendValues, borderColor: '#e11d48', backgroundColor: gf, fill: true, tension: 0.25, borderWidth: 2.5, pointBackgroundColor: '#a855f7', pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 } } }, x: { grid: { display: false }, ticks: { font: { size: 9 } } } } } });
+
+      const donutCtx = document.getElementById('donutChart').getContext('2d'); if(donutInstance) donutInstance.destroy();
+      let dl = compArray.slice(0, 3).map(c => c.company); let dv = compArray.slice(0, 3).map(c => c.hours.toFixed(1));
+      if(compArray.length > 3) { dl.push('อื่นๆ'); dv.push(compArray.slice(3).reduce((s, c) => s + c.hours, 0).toFixed(1)); }
+      donutInstance = new Chart(donutCtx, { type: 'doughnut', data: { labels: dl, datasets: [{ data: dv, backgroundColor: ['#e11d48', '#a855f7', '#0ea5e9', '#cbd5e1'], borderWidth: 1.5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '72%' } });
+      const lc = document.getElementById('donut-legend'); lc.innerHTML = ''; const clrs = ['#e11d48', '#a855f7', '#0ea5e9', '#cbd5e1'];
+      dl.forEach((l, idx) => { lc.insertAdjacentHTML('beforeend', `<div class="flex items-center gap-1 truncate"><span class="w-2 h-2 rounded-full" style="background-color: ${clrs[idx]}"></span><span class="truncate text-[10px]">${l}</span></div>`); });
+      renderTable(filteredRecords);
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
+      if(rows.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-slate-400">ไม่พบประวัติในช่วงเวลานี้</td></tr>'; return; }
+      [...rows].sort((a,b) => b.timestamp - a.timestamp).forEach(r => {
+        tbody.insertAdjacentHTML('beforeend', `<tr class="hover:bg-slate-50"><td class="px-3 py-2.5 text-slate-400 text-[11px]">${r.dateString.split(' ')[0]}</td><td class="px-3 py-2.5 font-semibold text-slate-800">${r.name}</td><td class="px-3 py-2.5 text-slate-500">${r.company}</td><td class="px-3 py-2.5 text-center text-rose-600 font-bold">${r.hours.toFixed(1)}</td><td class="px-3 py-2.5 max-w-[120px] truncate text-slate-400">${r.detail}</td></tr>`);
+      });
+    }
+
+    function filterTable() {
+      const val = document.getElementById('search-box').value.toLowerCase();
+      renderTable(filteredRecords.filter(r => r.name.toLowerCase().includes(val)));
+    }
+  </script>
+</body>
+</html>
